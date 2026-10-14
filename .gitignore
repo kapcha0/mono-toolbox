@@ -1,0 +1,16 @@
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+
+# Obsidian — keep the vault, drop volatile state
+.obsidian/workspace*.json
+.obsidian/cache/
+.trash/
+
+# Logs
+*.log

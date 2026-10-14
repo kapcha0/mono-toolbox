@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>mono-toolbox — developer tools, 100% offline</title>
+  <meta name="description" content="Privacy-first developer toolbox: JSON, Base64, URL, Hash, JWT, Regex. Runs entirely in your browser, nothing leaves your device." />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><rect x='9' y='9' width='14' height='14' fill='%23fff'/></svg>" />
+  <link rel="stylesheet" href="assets/mono.css" />
+  <style>
+    .shell-header {
+      position: sticky; top: 0; z-index: 10;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(8px);
+      border-bottom: var(--hairline) solid var(--border);
+      padding-block: var(--s-3);
+    }
+    .brand { display: inline-flex; align-items: center; gap: var(--s-2); text-decoration: none; }
+    .brand__mark { width: 16px; height: 16px; background: var(--fg); box-shadow: inset 0 0 0 3px var(--bg); }
+    .brand__name { font-weight: 650; letter-spacing: -0.02em; }
+    .site-nav { display: flex; gap: var(--s-4); }
+    .site-nav a { color: var(--fg-muted); text-decoration: none; font-size: var(--text-sm); }
+    .site-nav a:hover { color: var(--fg); opacity: 1; }
+    .tabs--inline { border: 0; }
+    .tabs--inline .tab { padding: var(--s-1) var(--s-2); border: 0; font-weight: 550; }
+    .tabs--inline .tab[aria-selected="true"] { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
+    .hero { padding-block: var(--s-8) var(--s-6); }
+    .lead { font-size: var(--text-md); max-width: 60ch; color: var(--fg-muted); }
+    .tool-tabs { flex-wrap: wrap; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; margin-top: var(--s-3); }
+    .output { background: var(--surface-2); border: var(--hairline) solid var(--border); border-radius: var(--r-3); padding: var(--s-4); min-height: 180px; max-height: 420px; overflow: auto; white-space: pre-wrap; word-break: break-word; font-family: var(--font-mono); font-size: var(--text-sm); margin: 0; }
+    .output--ok { border-left: 3px solid var(--sev-info); }
+    .output--warn { border-left: 3px solid var(--sev-warn); }
+    .output--err { border-left: 3px solid var(--sev-critical); }
+    .grid-2 { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .small { font-size: var(--text-xs); }
+    .hint-box { padding: var(--s-3) var(--s-4); border: var(--hairline) dashed var(--border); border-radius: var(--r-2); background: var(--surface-2); color: var(--fg-muted); }
+    .matches { display: grid; gap: var(--s-2); font-family: var(--font-mono); font-size: var(--text-sm); }
+    .match { padding: var(--s-2) var(--s-3); background: var(--surface-2); border: var(--hairline) solid var(--border); border-radius: var(--r-2); white-space: pre-wrap; word-break: break-word; }
+    kbd { user-select: none; }
+    @media (max-width: 720px) { .site-nav { display: none; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#tools" data-i18n="skip">Skip to tools</a>
+
+  <header class="shell-header">
+    <div class="container row row--between">
+      <a class="brand" href="#">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__name">mono<span class="muted">·</span>toolbox</span>
+      </a>
+      <div class="row">
+        <nav class="site-nav">
+          <a href="#tools" data-i18n="navTools">Tools</a>
+          <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+        </nav>
+        <div class="tabs tabs--inline" role="tablist" aria-label="Language">
+          <button class="tab" role="tab" data-lang="en" aria-selected="true">EN</button>
+          <button class="tab" role="tab" data-lang="ru" aria-selected="false">RU</button>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="theme-toggle" aria-label="Toggle theme">
+          <span aria-hidden="true">◐</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero container stack">
+      <span class="badge badge--solid" data-i18n="offlineBadge">100% offline</span>
+      <h1 data-i18n="title">Developer toolbox</h1>
+      <p class="lead" data-i18n="subtitle">Six practical tools that run entirely in your browser. Nothing leaves your device — no network calls, no tracking.</p>
+      <p class="muted small" data-i18n="shortcuts">Shortcuts: Alt+1–6 switch tabs · Ctrl+Enter runs the active tool</p>
+    </section>
+
+    <hr class="container" />
+
+    <section id="tools" class="container stack" style="padding-block: var(--s-6)">
+      <div class="tabs tool-tabs" role="tablist" aria-label="Tools">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="p-json" id="t-json">JSON</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-base64" id="t-base64">Base64</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-url" id="t-url">URL</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-hash" id="t-hash">Hash</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-jwt" id="t-jwt">JWT</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-regex" id="t-regex">Regex</button>
+      </div>
+
+      <div class="tabpanel stack" id="p-json" role="tabpanel" aria-labelledby="t-json">
+        <h3 data-i18n="jsonTitle">JSON formatter &amp; validator</h3>
+        <div class="field">
+          <label class="label" for="json-input" data-i18n="input">Input</label>
+          <textarea class="textarea" id="json-input" spellcheck="false" placeholder='{"name":"mono","version":"1.0.0"}'></textarea>
+          <div class="toolbar">
+            <button class="btn btn--primary" id="json-format" data-i18n="format">Format</button>
+            <button class="btn" id="json-minify" data-i18n="minify">Minify</button>
+            <button class="btn" id="json-validate" data-i18n="validate">Validate</button>
+            <button class="btn btn--ghost" id="json-copy" data-i18n="copy">Copy</button>
+            <button class="btn btn--ghost" id="json-clear" data-i18n="clear">Clear</button>
+            <span class="muted small" id="json-status"></span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="json-output" data-i18n="output">Output</label>
+          <pre class="output" id="json-output" spellcheck="false"></pre>
+        </div>
+        <p class="small muted" data-i18n="jsonNote">Uses built-in JSON.parse/stringify — runs locally only.</p>
+      </div>
+
+      <div class="tabpanel stack" id="p-base64" role="tabpanel" aria-labelledby="t-base64" hidden>
+        <h3 data-i18n="b64Title">Base64 encode/decode (UTF-8)</h3>
+        <div class="grid-2">
+          <div class="field">
+            <label class="label" for="b64-input" data-i18n="text">Text</label>
+            <textarea class="textarea" id="b64-input" spellcheck="false" placeholder="Hello, мир"></textarea>
+          </div>
+          <div class="field">
+            <label class="label" for="b64-output" data-i18n="base64">Base64</label>
+            <textarea class="textarea" id="b64-output" spellcheck="false" placeholder="SGVsbG8sINC60L7QvA=="></textarea>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn--primary" id="b64-encode" data-i18n="encode">Encode</button>
+          <button class="btn" id="b64-decode" data-i18n="decode">Decode</button>
+          <button class="btn btn--ghost" id="b64-swap" data-i18n="swap">Swap</button>
+          <button class="btn btn--ghost" id="b64-copy" data-i18n="copy">Copy</button>
+          <button class="btn btn--ghost" id="b64-clear" data-i18n="clear">Clear</button>
+          <span class="muted small" id="b64-status"></span>
+        </div>
+        <p class="small muted" data-i18n="b64Note">UTF-8 safe via TextEncoder/TextDecoder.</p>
+      </div>
+
+      <div class="tabpanel stack" id="p-url" role="tabpanel" aria-labelledby="t-url" hidden>
+        <h3 data-i18n="urlTitle">URL encode/decode</h3>
+        <div class="field">
+          <label class="label" for="url-input" data-i18n="input">Input</label>
+          <textarea class="textarea" id="url-input" spellcheck="false" placeholder="https://example.com/search?q=mono ui&lang=ru"></textarea>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn--primary" id="url-encode" data-i18n="encodeFull">Encode (full)</button>
+          <button class="btn" id="url-enccomp" data-i18n="encodeComp">Encode components</button>
+          <button class="btn" id="url-decode" data-i18n="decode">Decode</button>
+          <button class="btn btn--ghost" id="url-copy" data-i18n="copy">Copy</button>
+          <button class="btn btn--ghost" id="url-clear" data-i18n="clear">Clear</button>
+          <span class="muted small" id="url-status"></span>
+        </div>
+        <div class="field">
+          <label class="label" for="url-output" data-i18n="output">Output</label>
+          <pre class="output" id="url-output"></pre>
+        </div>
+      </div>
+
+      <div class="tabpanel stack" id="p-hash" role="tabpanel" aria-labelledby="t-hash" hidden>
+        <h3 data-i18n="hashTitle">Hash generator (WebCrypto)</h3>
+        <div class="field">
+          <label class="label" for="hash-input" data-i18n="text">Text</label>
+          <textarea class="textarea" id="hash-input" spellcheck="false" placeholder="Enter text to hash..."></textarea>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn--primary" id="hash-compute" data-i18n="compute">Compute</button>
+          <button class="btn btn--ghost" id="hash-copy-all" data-i18n="copyAll">Copy all</button>
+          <button class="btn btn--ghost" id="hash-clear" data-i18n="clear">Clear</button>
+          <span class="muted small" id="hash-status"></span>
+        </div>
+        <div class="stack stack--sm" style="margin-top: var(--s-4)">
+          <div class="field"><label class="label mono" for="hash-sha1">SHA-1</label><input class="input mono" id="hash-sha1" readonly spellcheck="false" /></div>
+          <div class="field"><label class="label mono" for="hash-sha256">SHA-256</label><input class="input mono" id="hash-sha256" readonly spellcheck="false" /></div>
+          <div class="field"><label class="label mono" for="hash-sha384">SHA-384</label><input class="input mono" id="hash-sha384" readonly spellcheck="false" /></div>
+          <div class="field"><label class="label mono" for="hash-sha512">SHA-512</label><input class="input mono" id="hash-sha512" readonly spellcheck="false" /></div>
+        </div>
+        <p class="small muted" data-i18n="hashNote">Uses crypto.subtle.digest (browser-native). SHA-1 included for compatibility only.</p>
+      </div>
+
+      <div class="tabpanel stack" id="p-jwt" role="tabpanel" aria-labelledby="t-jwt" hidden>
+        <h3 data-i18n="jwtTitle">JWT decoder (header &amp; payload)</h3>
+        <div class="field">
+          <label class="label" for="jwt-input" data-i18n="jwtToken">JWT token</label>
+          <textarea class="textarea mono" id="jwt-input" spellcheck="false" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SIG"></textarea>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn--primary" id="jwt-decode" data-i18n="decode">Decode</button>
+          <button class="btn btn--ghost" id="jwt-copy-header" data-i18n="copyHeader">Copy header</button>
+          <button class="btn btn--ghost" id="jwt-copy-payload" data-i18n="copyPayload">Copy payload</button>
+          <button class="btn btn--ghost" id="jwt-clear" data-i18n="clear">Clear</button>
+          <span class="muted small" id="jwt-status"></span>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="label" for="jwt-header">Header (JSON)</label>
+            <pre class="output" id="jwt-header"></pre>
+          </div>
+          <div class="field">
+            <label class="label" for="jwt-payload">Payload (JSON)</label>
+            <pre class="output" id="jwt-payload"></pre>
+          </div>
+        </div>
+        <div class="hint-box small">
+          <strong data-i18n="jwtWarnTitle">Important:</strong> <span data-i18n="jwtWarn">Signature is not verified here (client-side only). This tool does not send your token anywhere.</span>
+        </div>
+      </div>
+
+      <div class="tabpanel stack" id="p-regex" role="tabpanel" aria-labelledby="t-regex" hidden>
+        <h3 data-i18n="regexTitle">Regex tester</h3>
+        <div class="grid-2">
+          <div class="field">
+            <label class="label" for="rx-pattern" data-i18n="pattern">Pattern</label>
+            <input class="input mono" id="rx-pattern" spellcheck="false" placeholder="([A-Za-z]+)\s+(\d+)" />
+          </div>
+          <div class="field">
+            <label class="label" for="rx-flags" data-i18n="flags">Flags</label>
+            <input class="input mono" id="rx-flags" spellcheck="false" placeholder="gimuy" />
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="rx-text" data-i18n="testText">Test string</label>
+          <textarea class="textarea" id="rx-text" spellcheck="false" placeholder="mono 1&#10;toolbox 2"></textarea>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn--primary" id="rx-test" data-i18n="test">Test</button>
+          <button class="btn btn--ghost" id="rx-clear" data-i18n="clear">Clear</button>
+          <span class="muted small" id="rx-status"></span>
+        </div>
+        <div class="field">
+          <label class="label" data-i18n="matches">Matches</label>
+          <div class="matches" id="rx-matches"></div>
+        </div>
+        <p class="small muted" data-i18n="regexNote">Runs entirely in your browser with JavaScript RegExp.</p>
+      </div>
+    </section>
+
+    <hr class="container" />
+
+    <section id="privacy" class="container stack" style="padding-block: var(--s-7)">
+      <h2 data-i18n="privacyTitle">Privacy</h2>
+      <p class="muted" data-i18n="privacyText">This page works 100% offline. No HTTP requests are made, no cookies, no analytics, no local tracking beyond your own theme/language preference (stored only in localStorage on your device). All processing happens in your browser tab.</p>
+      <div class="hint-box"><strong data-i18n="proof">Proof:</strong> <span data-i18n="proofText">Open DevTools → Network, load this page, run any tool — you'll see zero requests.</span></div>
+    </section>
+  </main>
+
+  <footer class="container row row--between muted small" style="padding-block: var(--s-7); border-top: var(--hairline) solid var(--border); margin-top: var(--s-8)">
+    <span>© <span id="year"></span> mono-toolbox · <a href="https://github.com/kapcha0/mono-ui">mono-ui</a> · <span data-i18n="built">built without frameworks</span></span>
+    <a href="#" data-i18n="toTop">Back to top ↑</a>
+  </footer>
+
+  <script src="assets/app.js" defer></script>
+</body>
+</html>
